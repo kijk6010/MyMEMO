@@ -1,0 +1,314 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="initial-scale=1.0, width=device-width">
+<title>연락처 앱</title>
+
+<!-- 제이쿼리모바일, 제이쿼리, 폰갭 라이브러리 파일(CDN 방식)  -->      
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
+
+<script src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
+<script src="cordova.js"></script>
+
+<!-- 사용자 정의 자바스크립트 파일  -->
+
+<script src="Login.js"></script>
+<script src="MemoHandle.js"></script>
+<script src="photo.js"></script>
+<script src="memoDisplay.js"></script>
+
+<script> 
+    //전역 변수
+    var db=null;
+    var db1=null;
+    var varPosition=null;
+    var recordSet=null;
+    var flag;
+    var varMemoName;
+	$(document).ready(function(){   
+        //폰갭 초기화
+		initPhoneGap();
+        //DB,Table연결
+        openDB();
+        createTable();
+        openDB1();
+        createTable1();
+        
+        
+      
+    //이벤트 핸들러 정의
+        $('#btnLogin').click(function(){
+            Login();
+        });
+           $('#btnLogout').click(function(){
+            Logout();
+        });
+        $('#btnAdd').click(function(){
+           insertMemo(); 
+        });
+		$('#btnTakePic1').click(function(){
+            if($('#memoPic1').val()==''){
+                navigator.notification.alert('사진 이름을 먼저 입력해주세요');
+            }else{
+            flag='enrol';
+            capturePhoto();
+            }
+        });	
+        $('#btnMemoSearch').click(function(){      
+          selectMemo();
+	    });
+       $('#btnPicShow').click(function(){
+           getMemoPic();
+       });
+        $('#btnDeleteSearch').click(function(){
+            var name=$('#sMemoName2').val();
+            selectMemoDelete(name);
+        });
+        $('#btnDelete').click(function(){
+            deleteMemo();
+        })
+         $('#btnChange').click(function(){
+            updateMemo();
+        })
+         $('#btnCancel').click(function(){
+                 $('#memoType3').val('미정').attr('selected','selected');    
+        $('#memoType3').selectmenu('refresh');
+       $('#Imfortant2').val('0').slider('refresh');
+            form2.reset();  
+         })
+	 });	
+	function initPhoneGap() {
+ 		document.addEventListener('deviceready', onDeviceReady, true);
+	}   
+   	function onDeviceReady() {
+		navigator.notification.alert('장치 준비됨', null, '폰갭 API');
+	}	        
+</script>
+    <style>
+        .my_listview_img{padding: 10px;}
+        #btnGroup{margin:5px 5px;}
+        #picArea{width: 100%; height:width*3/4;}
+     $('div[h1]').css('background-color':'blue');
+          $('input[type]').css('background-color':'purple');
+			li{list-style:none;}
+		img{display:block;  height:auto; width:100%;}
+
+       not(#Domemo){text-align: center;}
+        
+    </style>
+</head>
+<body>
+
+  <div data-role="page" id="LOGINpage" data-position="fixed" data-theme="d">
+    <div data-role="header">
+		<h1>나만의 MEMO장</h1>
+	</div>		
+    <div data-role="content"data-position="fixed">
+    <img src="img/login.gif">
+    </div>
+	<div data-role="content" data-position="fixed" name="user">
+      
+    <label for="fullName">이름(name) : </label>
+	 	<input type="text" name="fullName" id="fullName"/>
+	 	<label for="mobilePhone">전화(mobile) : </label>
+		<input type="tel" name="mobilePhone" id="mobilePhone"/>	
+		<label for="homeAddress">학교(school) : </label>	
+		<input type="text" name="school" id="school"/>		
+    	<input type="button" id="btnLogin" value="LOGIN"/>
+      
+    </div>
+    
+   
+     <div data-role="footer" data-position="fixed"><h4>
+         Do Write! Don't forget!</h4></div>
+    </div>
+   
+
+
+  
+<div data-role="page" id="Mainpage" data-postion="fixed"data-theme="d">
+    <div data-role="header">
+        <h1>나만의 MEMO장</h1>
+    </div>
+       <div data-role="content"data-position="fixed">
+    <img src="img/main.gif">
+           <div data-role="controlgroup" >
+            <a href="#Domemo" data-role="button">Doing MEMO</a>
+           <a href="#checkwork" data-role="button">MEMO 조회</a>
+              <a href="#memoDeletePage" data-role="button">MEMO 수정/삭제</a>
+           </div>
+        <input type="button" id="btnLogout" value="시작 Page로 되돌아가기"/>
+    </div>
+    <div data-role="footer" data-position="fixed">
+        <h4> Do Write! Don't forget!</h4></div>
+    </div>
+    
+    
+    <div data-role="page" id="Domemo" data-position="fixed" data-theme="d">
+    <div data-role="header" data-position="fixed">
+        <a href="#" data-icon="back" data-rel="back" data-direction="reverse">back</a>
+        <h1>나만의 MEMO장</h1>
+        <a href="#Mainpage" data-icon="home" data-iconpos="notext">HOME</a>
+        <div data-role="navbar">
+            <ul>
+            <li><a href="#Domemo">Doing MEMO</a></li>
+            <li><a href="#checkwork">MEMO 조회</a></li>
+                   <li><a href="#memoDeletePage">MEMO 수정/삭제</a></li>
+            
+        </ul>
+        </div></div>
+        <div data-role="content">
+            <form name="form1">
+            <h3>MEMO 하기</h3>
+            <div class="ui-body ui-body-c gap">
+                <label for="memoType1" class="select">메모 설정:</label>
+                <select name="memoType1" id="memoType1"  data-mini="true" data-inline="true"data-native-menu="false">
+                 <option value="미정">미정</option>
+                    <option value="일반">일반</option>
+                    <option value="과제">과제</option>
+                </select>
+                <label for="memoName1">메모 제목:</label>
+                <input type="text" name="memoName1" id="memoName1" data-mini="true"/>
+                <label for="memoContent1">메모 내용:</label>
+                <textarea cols="25" rows="5" name="memoContent1" id="memoContent1" data-mini="true"></textarea>
+                <label for="memoPic1">사진 첨부:</label>
+                <input type="text" name="memoPic1" id="memoPic1" data-mini="true" placeholder="저장할 사진명"/>
+                <input type="button" name="takePic1" id="btnTakePic1" value="사진촬영" data-mini="true"/>
+                <label for="Imfortant1">메모 중요도:</label>
+                <input type="range" name="Imfortant1" id="Imfortant1" min="0" max="10" data-mini="true"/>
+                </div>
+            <div class="ui-body">
+                <fieldset class="ui-grid-a">
+                <div class="ui-block-a">
+                    <input type="reset" id="btnAddCancel1" value="취소"/></div>
+                <div class="ui-block-b">
+                    <input type="button" id="btnAdd" value="입력">
+                    </div>
+                </fieldset>
+                </div>
+            </form>
+        </div>
+        <div data-role="footer" data-position="fixed">
+        <h4> Do Write! Don't forget!</h4>
+        </div>
+
+    </div>
+     
+    <div data-role="page" id="memoDeletePage"data-position="fixed" data-theme="e">
+     <div data-role="header" data-position="fixed">
+        <a href="#" data-icon="back" data-rel="back" data-direction="reverse">back</a>
+        <h1>나만의 MEMO장</h1>
+        <a href="#Mainpage" data-icon="home" data-iconpos="notext">HOME</a>
+        <div data-role="navbar">
+            <ul>
+            <li><a href="#Domemo">Doing MEMO</a></li>
+            <li><a href="#checkwork">MEMO 조회</a></li>
+          <li><a href="#memoDeletePage">MEMO 수정/삭제</a></li>
+        </ul>
+        </div></div>
+        <div data-role="content" data-position="fixed">
+            <form name="form2">
+                <h3>메모 수정/삭제</h3>
+                <div class="ui-body ui-body-d gap">
+                <label for="sMemoName2">메모 제목 :</label>
+                <input type="search" name="sMemoName2" id="sMemoName2" value="" data-mini="true"/>
+                     <label for="memoType1" class="select">메모 설정:</label>
+                <select name="memoType3" id="memoType3"  data-mini="true" data-inline="true"data-native-menu="false">
+                 <option value="미정">미정</option>
+                    <option value="일반">일반</option>
+                    <option value="과제">과제</option>
+                </select>
+                    <label for="memoContent2">메모 내용:</label>
+                <textarea cols="25" rows="5" name="memoContent2" id="memoContent2" data-mini="true"></textarea>
+                <label for="memoPic2">사진 첨부:</label>
+                <input type="text" name="memoPic2" id="memoPic2" data-mini="true" placeholder="저장할 사진명"/>
+                <input type="button" name="takePic2" id="btnTakePic2" value="사진촬영" data-mini="true"/>
+                <label for="Imfortant2">메모 중요도:</label>
+                <input type="range" name="Imfortant2" id="Imfortant2" min="0" max="10" data-mini="true"/>
+                </div><br/>
+                <div data-role="controlgroup" data-type="horizontal">
+                 <input type="button" id="btnDeleteSearch" value="검색"/>
+                    <input type="reset" id="btnCancel" value="취소"/>
+                      <input type="button" id="btnChange" value="수정"/>
+                    <input type="button" id="btnDelete" value="삭제"/></div>
+            </form>
+            
+        </div>
+         <div data-role="footer" data-position="fixed">
+        <h4> Do Write! Don't forget!</h4>
+         </div>
+    </div>
+    <div data-role="page" id="checkwork" data-position="fixed" data-theme="d">
+    <div data-role="header" data-position="fixed">
+        <a href="#" data-icon="back" data-rel="back" data-direction="reverse">back</a>
+        <h1>나만의 MEMO장</h1>
+        <a href="#Mainpage" data-icon="home" data-iconpos="notext">HOME</a>
+        <div data-role="navbar">
+            <ul>
+            <li><a href="#Domemo">Doing MEMO</a></li>
+            <li><a href="#checkwork">MEMO 조회</a></li>
+          <li><a href="#memoDeletePage">MEMO 수정/삭제</a></li>
+        </ul>
+        </div></div>
+         <div data-role="content" data-position="fixed">
+             <div class="ui-body ui-body-c"><br/>
+                 <fieldset class="ui-grid-a">
+                     
+             <div class="ui-bar ui-bar-d"><h3>메모 유형별 조회</h3></div>
+                     <div class="ui-block-a">
+          <select name="memoType2" id="memoType2" data-native-menu="false" data-mini="true" data-inline="true">
+              <option value="미정">미정</option>
+                    <option value="일반">일반</option>
+                    <option value="과제">과제</option>
+                     </select></div>
+                  <div class="ui-block-b" style="vertical-align:top">
+             <input type="button" id="btnMemoSearch" value="조회" data-mini="true" data-inline="true"/></div>
+                 </fieldset>
+         </div>
+             <ul data-role="listview" id="memoListArea" data-divider-theme="b" data-inset="true">
+             <!--메모 리스트 표시 영역-->
+             </ul>
+            
+        </div>
+         <div data-role="footer" data-position="fixed">
+        <h4> Do Write! Don't forget!</h4>
+         </div></div>
+    <div data-role="page" id="memoInfoShowPage" data-position="fixed" data-theme="d">
+    <div data-role="header" data-position="fixed">
+        <a href="#" data-icon="back" data-rel="back" data-direction="reverse">back</a>
+        <h1>나만의 MEMO장</h1>
+        <a href="#Mainpage" data-icon="home" data-iconpos="notext">HOME</a>
+        <div data-role="navbar">
+            <ul>
+            <li><a href="#Domemo">Doing MEMO</a></li>
+            <li><a href="#checkwork">MEMO 조회</a></li>
+                <li><a href="#memoDeletePage">MEMO 수정/삭제</a></li>
+        </ul>
+        </div></div>
+         <div data-role="content" data-position="fixed">
+             <div id="btnGroup">
+                 <span id="btnPicShow"><button data-role="none">사진보기</button></span></div>
+             <div class="ui-body ui-body-c">
+             <br/><div id="memoInfoArea">
+                 메모 정보 표시 영역
+                 </div></div>
+         </div>
+         <div data-role="footer" data-position="fixed">
+        <h4> Do Write! Don't forget!</h4>
+         </div></div>
+    
+    <div data-role="dialog" id="picShowDialog" data-theme="c">
+    <div data-role="header" data-theme="c">
+        <h1>메모 사진</h1>
+        </div>
+    <div data-role="content" data-theme="c">
+        <div id="picName" class="ui-bar ui-bar-e"></div><br/>
+        <div><img id="picArea" src=""/></div>
+        </div>
+    </div>
+</body>
+</html>  
+
