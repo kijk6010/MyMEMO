@@ -1,5 +1,7 @@
 2016년 웹프로그래밍 응용 수업(박성진 교수님) 수강시에 작성해본 메모장 애플리케이션 입니다.
+
 < 모바일 웹+웹 앱+하이브리드 앱 입문 > 저자.박성진 교수님
+
 책 내에 있는 소스코드를 갖고 직접 작성해보았습니다.
 
 # Hello World PhoneGap Template [![bitHound Score][bithound-img]][bithound-url]
